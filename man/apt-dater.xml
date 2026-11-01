@@ -84,6 +84,7 @@ and docbook-xsl in your Build-Depends control field.
       <command>&dhpackage;</command>
 
       <arg><option>[-(c <replaceable>config</replaceable>|v|[n]r)]</option></arg>
+      <arg><option>[--refresh-all-on-launch]</option></arg>
     </cmdsynopsis>
   </refsynopsisdiv>
   <refsect1>
@@ -124,6 +125,12 @@ and docbook-xsl in your Build-Depends control field.
         <term><option>-n</option></term>
         <listitem>
           <para>Prevent hosts to be refreshed before create XML report (useful for cronjobs which do not have access to SSH key(s)).</para>
+        </listitem>
+      </varlistentry>
+      <varlistentry>
+        <term><option>--refresh-all-on-launch</option></term>
+        <listitem>
+          <para>Mark every configured host for refresh when starting the interactive UI, i.e. queue a refresh of all hosts right after startup. Ignored in XML report mode (<option>-r</option>), which already refreshes all hosts.</para>
         </listitem>
       </varlistentry>
     </variablelist>

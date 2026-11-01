@@ -29,6 +29,7 @@
 #include <glib.h>
 #include <glib/gstdio.h>
 #include <errno.h>
+#include <getopt.h>
 #ifdef HAVE_LOCALE_H
 #include <locale.h>
 #endif
@@ -65,6 +66,7 @@ int main(int argc, char **argv, char **envp)
  gchar *cfgfilename = NULL;
  gchar *cfgdirname = NULL;
  GList *hosts = NULL;
+ gboolean refresh_all_on_launch = FALSE;
 #ifdef FEAT_XMLREPORT
  gboolean report = FALSE;
  gboolean refresh = TRUE;
@@ -95,7 +97,12 @@ int main(int argc, char **argv, char **envp)
  if(chkForInitialConfig(cfgdirname, cfgfilename))
   g_warning(_("Failed to create initial configuration file %s."), cfgfilename);
 
- while ((opts = getopt(argc, argv, "c:vrn")) != EOF) {
+ static const struct option long_options[] = {
+  {"refresh-all-on-launch", no_argument, NULL, 'R'},
+  {NULL, 0, NULL, 0}
+ };
+
+ while ((opts = getopt_long(argc, argv, "c:vrn", long_options, NULL)) != EOF) {
   switch(opts) {
   case 'c':
    if(cfgfilename) free(cfgfilename);
@@ -104,6 +111,9 @@ int main(int argc, char **argv, char **envp)
   case 'v':
     g_print(VERSTEXT);
     exit(0);
+   break;
+  case 'R':
+   refresh_all_on_launch = TRUE;
    break;
   case 'r':
 #ifdef FEAT_XMLREPORT
@@ -119,9 +129,9 @@ int main(int argc, char **argv, char **envp)
 #endif
   default:
 #ifdef FEAT_XMLREPORT
-   g_printerr(_("Usage: %s [-(c config|v|[n]r)]\n"), g_get_prgname());
+   g_printerr(_("Usage: %s [-(c config|v|[n]r)] [--refresh-all-on-launch]\n"), g_get_prgname());
 #else
-   g_printerr(_("Usage: %s [-(c config|v)]\n"), g_get_prgname());
+   g_printerr(_("Usage: %s [-(c config|v)] [--refresh-all-on-launch]\n"), g_get_prgname());
 #endif
    exit(EXIT_FAILURE);
   }
@@ -198,6 +208,15 @@ int main(int argc, char **argv, char **envp)
    }
 #endif
 #endif
+
+   if(refresh_all_on_launch) {
+     GList *ho = g_list_first(hosts);
+
+     while(ho) {
+       ((HostNode *)ho->data)->category = C_REFRESH_REQUIRED;
+       ho = g_list_next(ho);
+     }
+   }
 
    getOldestMtime(hosts);
 
