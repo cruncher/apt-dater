@@ -48,7 +48,15 @@ run_cmd () {
 
 run_hook () {
     if [ -n "$1" -a -d "$1" ]; then
-	run-parts "$1"
+	if command -v run-parts >/dev/null 2>&1; then
+	    run-parts "$1"
+	else
+	    for hook in "$1"/*; do
+		if [ -f "$hook" -a -x "$hook" ]; then
+		    "$hook"
+		fi
+	    done
+	fi
     fi
 }
 

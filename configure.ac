@@ -323,11 +323,13 @@ AC_DEFINE_UNQUOTED(SCREEN_SOCKPATH,"$screen_sockpath",[ Where screen stores the 
 echo "$screen_sockpath"
 
 
-# Check if `tmux' support is enabled.
-AC_MSG_CHECKING(--enable-tmux argument)
+# Check if `tmux' support is enabled (default: yes).
+AC_MSG_CHECKING(tmux support)
 AC_ARG_ENABLE(tmux,
-	[  --enable-tmux      Enable tmux terminal multiplexer (replaces screen).], [enable_tmux="yes"],
-	[enable_tmux="no"])
+	[AS_HELP_STRING([--disable-tmux],
+		[use screen(1) instead of tmux(1) as terminal multiplexer])],
+	[enable_tmux="$enableval"],
+	[enable_tmux="yes"])
 AC_MSG_RESULT($enable_tmux)
 if test "$enable_tmux" = "yes"; then
     # Check if `tmux' is installed on your system
