@@ -6,6 +6,7 @@
 ./src/env.c
 ./src/exec.c
 ./src/history.c
+./src/json.c
 ./src/keyfiles.c
 ./src/lock.c
 ./src/parsecmd.c

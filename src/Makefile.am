@@ -27,6 +27,8 @@ SHARED_SOURCES =			\
 	exec.c				\
 	exec.h				\
 	extern.h			\
+	json.c				\
+	json.h				\
 	keyfiles.c			\
 	keyfiles.h			\
 	lock.c				\

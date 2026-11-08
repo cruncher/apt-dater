@@ -42,6 +42,7 @@
 #include "sighandler.h"
 #include "lock.h"
 #include "env.h"
+#include "json.h"
 
 #ifdef FEAT_XMLREPORT
 #include "report.h"
@@ -67,6 +68,7 @@ int main(int argc, char **argv, char **envp)
  gchar *cfgdirname = NULL;
  GList *hosts = NULL;
  gboolean refresh_all_on_launch = FALSE;
+ gboolean json = FALSE;
 #ifdef FEAT_XMLREPORT
  gboolean report = FALSE;
  gboolean refresh = TRUE;
@@ -99,10 +101,11 @@ int main(int argc, char **argv, char **envp)
 
  static const struct option long_options[] = {
   {"refresh-all-on-launch", no_argument, NULL, 'R'},
+  {"json", no_argument, NULL, 'j'},
   {NULL, 0, NULL, 0}
  };
 
- while ((opts = getopt_long(argc, argv, "c:vrn", long_options, NULL)) != EOF) {
+ while ((opts = getopt_long(argc, argv, "c:vrnj", long_options, NULL)) != EOF) {
   switch(opts) {
   case 'c':
    if(cfgfilename) free(cfgfilename);
@@ -114,6 +117,9 @@ int main(int argc, char **argv, char **envp)
    break;
   case 'R':
    refresh_all_on_launch = TRUE;
+   break;
+  case 'j':
+   json = TRUE;
    break;
   case 'r':
 #ifdef FEAT_XMLREPORT
@@ -129,13 +135,19 @@ int main(int argc, char **argv, char **envp)
 #endif
   default:
 #ifdef FEAT_XMLREPORT
-   g_printerr(_("Usage: %s [-(c config|v|[n]r)] [--refresh-all-on-launch]\n"), g_get_prgname());
+   g_printerr(_("Usage: %s [-(c config|v|[n]r|j)] [--refresh-all-on-launch] [--json]\n"), g_get_prgname());
 #else
-   g_printerr(_("Usage: %s [-(c config|v)] [--refresh-all-on-launch]\n"), g_get_prgname());
+   g_printerr(_("Usage: %s [-(c config|v|j)] [--refresh-all-on-launch] [--json]\n"), g_get_prgname());
 #endif
    exit(EXIT_FAILURE);
   }
  }
+#ifdef FEAT_XMLREPORT
+ if(json && report) {
+  g_printerr(_("Options --json and -r are mutually exclusive.\n"));
+  exit(EXIT_FAILURE);
+ }
+#endif
  if(!cfgfilename) g_error(_("Out of memory."));
 
  cfg = initialConfig();
@@ -195,6 +207,10 @@ int main(int argc, char **argv, char **envp)
 
  env_init(envp);
 
+ if(json) {
+   initJSON(hosts);
+ }
+ else {
 #ifdef FEAT_XMLREPORT
  if(!report) {
 #endif
@@ -231,6 +247,7 @@ int main(int argc, char **argv, char **envp)
     initReport(NULL);
  }
 #endif
+ }
 
  loop = g_main_loop_new (NULL, FALSE);
 
@@ -241,18 +258,23 @@ int main(int argc, char **argv, char **envp)
  g_timeout_add_seconds(1, (GSourceFunc) refreshStats, hosts);
 #endif
 
+ if(json)
+  g_timeout_add_seconds(1, (GSourceFunc) ctrlJSON, hosts);
+ else {
 #ifdef FEAT_XMLREPORT
- if(report)
-  g_idle_add ((GSourceFunc) ctrlReport, hosts);
- else
+  if(report)
+   g_idle_add ((GSourceFunc) ctrlReport, hosts);
+  else
 #endif
-  g_idle_add ((GSourceFunc) ctrlUI, hosts);
+   g_idle_add ((GSourceFunc) ctrlUI, hosts);
+ }
 
  /* Startup the main loop */
  g_main_loop_run (loop);
 
  g_main_loop_unref (loop);
- cleanUI();
+ if(!json)
+  cleanUI();
  cleanupLocks();
 
  freeConfig(cfg);

@@ -83,8 +83,9 @@ and docbook-xsl in your Build-Depends control field.
     <cmdsynopsis>
       <command>&dhpackage;</command>
 
-      <arg><option>[-(c <replaceable>config</replaceable>|v|[n]r)]</option></arg>
+      <arg><option>[-(c <replaceable>config</replaceable>|v|[n]r|j)]</option></arg>
       <arg><option>[--refresh-all-on-launch]</option></arg>
+      <arg><option>[--json]</option></arg>
     </cmdsynopsis>
   </refsynopsisdiv>
   <refsect1>
@@ -128,9 +129,15 @@ and docbook-xsl in your Build-Depends control field.
         </listitem>
       </varlistentry>
       <varlistentry>
+        <term><option>-j, --json</option></term>
+        <listitem>
+          <para>Refresh all configured hosts without starting the interactive UI and write a JSON status report to stdout. The report contains the number of hosts in each category (for example <literal>up_to_date</literal>, <literal>updates_pending</literal>, <literal>broken_packages</literal> and <literal>unknown</literal>) as well as a <literal>hosts</literal> array with the status details of every host. Progress messages are written to stderr. This option cannot be combined with <option>-r</option>.</para>
+        </listitem>
+      </varlistentry>
+      <varlistentry>
         <term><option>--refresh-all-on-launch</option></term>
         <listitem>
-          <para>Mark every configured host for refresh when starting the interactive UI, i.e. queue a refresh of all hosts right after startup. Ignored in XML report mode (<option>-r</option>), which already refreshes all hosts.</para>
+          <para>Mark every configured host for refresh when starting the interactive UI, i.e. queue a refresh of all hosts right after startup. Ignored in XML report mode (<option>-r</option>) and JSON mode (<option>--json</option>), which already refresh all hosts.</para>
         </listitem>
       </varlistentry>
     </variablelist>
