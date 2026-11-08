@@ -253,6 +253,16 @@ void handleXMLError(const xmlErrorPtr e) {
   if(e->domain == XML_FROM_IO && e->code == XML_IO_LOAD_ERROR && e->level == XML_ERR_WARNING)
     return;
 
+  /*
+   * XInclude propagates I/O failures (e.g. an optional global config file
+   * which is not readable) as XML_FROM_XINCLUDE errors. These carry no
+   * useful message ("parser error") - the underlying I/O warning has
+   * already been filtered above.
+   */
+  if(e->domain == XML_FROM_XINCLUDE &&
+     e->code >= XML_IO_UNKNOWN && e->code <= XML_IO_UNSUPPORTED_PROTOCOL)
+    return;
+
   switch(e->level) {
   case XML_ERR_WARNING:
     fprintf(stderr, "WARNING - ");

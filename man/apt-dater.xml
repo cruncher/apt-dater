@@ -131,7 +131,7 @@ and docbook-xsl in your Build-Depends control field.
       <varlistentry>
         <term><option>-j, --json</option></term>
         <listitem>
-          <para>Refresh all configured hosts without starting the interactive UI and write a JSON status report to stdout. The report contains the number of hosts in each category (for example <literal>up_to_date</literal>, <literal>updates_pending</literal>, <literal>broken_packages</literal> and <literal>unknown</literal>) as well as a <literal>hosts</literal> array with the status details of every host. Progress messages are written to stderr. This option cannot be combined with <option>-r</option>.</para>
+          <para>Refresh all configured hosts without starting the interactive UI and write a JSON status report to stdout. The report contains the number of hosts in each category (for example <literal>up_to_date</literal>, <literal>updates_pending</literal>, <literal>broken_packages</literal> and <literal>unknown</literal>) as well as a <literal>hosts</literal> array with the status details of every host. Each host entry contains an <literal>upgradable_packages</literal> array listing the packages that can be upgraded, with <literal>name</literal>, <literal>current_version</literal> and <literal>new_version</literal>. Progress messages are written to stderr. This option cannot be combined with <option>-r</option>.</para>
         </listitem>
       </varlistentry>
       <varlistentry>

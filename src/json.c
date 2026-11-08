@@ -157,6 +157,8 @@ static void jsonPrintReport(GList *hosts) {
  ho = g_list_first(hosts);
  while(ho) {
   HostNode *n = (HostNode *)ho->data;
+  GList *p;
+  guint pkgcount = 0;
 
   if(i++ > 0)
    g_string_append(out, ",");
@@ -173,11 +175,41 @@ static void jsonPrintReport(GList *hosts) {
    "\n      \"extras\": %d,"
    "\n      \"broken\": %d,"
    "\n      \"reboot_required\": %s,"
-   "\n      \"forbid\": %d"
-   "\n    }",
+   "\n      \"forbid\": %d,"
+   "\n      \"upgradable_packages\": [",
    n->nupdates, n->nholds, n->nextras, n->nbrokens,
    (n->status & (HOST_STATUS_KERNELABIUPGR | HOST_STATUS_KERNELVERUPGR)) ? "true" : "false",
    n->forbid);
+
+  p = g_list_first(n->packages);
+  while(p) {
+   PkgNode *pn = (PkgNode *)p->data;
+
+   if(pn->flag & HOST_STATUS_PKGUPDATE) {
+    if(pkgcount++ > 0)
+     g_string_append(out, ",");
+
+    g_string_append(out, "\n        {\"name\": ");
+    jsonAddString(out, pn->package);
+    g_string_append(out, ", \"current_version\": ");
+    jsonAddString(out, pn->version);
+    g_string_append(out, ", \"new_version\": ");
+
+    if(pn->data)
+     jsonAddString(out, pn->data);
+    else
+     g_string_append(out, "null");
+
+    g_string_append(out, "}");
+   }
+
+   p = g_list_next(p);
+  }
+
+  if(pkgcount > 0)
+   g_string_append(out, "\n      ");
+
+  g_string_append(out, "]\n    }");
 
   ho = g_list_next(ho);
  }
