@@ -68,10 +68,12 @@ if test "$enable_autoref" = "yes"; then
     AC_DEFINE(FEAT_AUTOREF, 1, [ Define if you want 'auto refresh' support included. ])
 fi
 
-AC_MSG_CHECKING(--enable-history argument)
+AC_MSG_CHECKING(history support)
 AC_ARG_ENABLE(history,
-	[  --enable-history      Include 'history' support.], [enable_history="yes"],
-	[enable_history="no"])
+	[AS_HELP_STRING([--disable-history],
+		[exclude 'history' support (records sessions using script(1))])],
+	[enable_history="$enableval"],
+	[enable_history="yes"])
 AC_MSG_RESULT($enable_history)
 if test "$enable_history" = "yes"; then
     AC_DEFINE(FEAT_HISTORY, 1, [ Define if you want 'history' support included. ])
