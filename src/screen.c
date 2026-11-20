@@ -64,6 +64,40 @@ screen_get_sdir() {
   return sdir;
 }
 
+/*
+ * Non-destructive session check. Unlike screen_get_sessions() this must not
+ * touch n->screens: callers such as the UI hold on to list nodes while
+ * sessions are refreshed.
+ */
+static gboolean
+screen_has_sessions(const HostNode *n) {
+  const gchar *sdir = screen_get_sdir();
+  if (!sdir)
+    return FALSE;
+
+  GDir *d = g_dir_open(sdir, 0, NULL);
+  if (!d)
+    return FALSE;
+
+  gchar *search = g_strdup_printf(SCREEN_SOCKPRE"%s_%s_%d", n->ssh_user, n->hostname, n->ssh_port);
+
+  gboolean found = FALSE;
+  const gchar *f;
+  while (!found && (f = g_dir_read_name(d))) {
+    gint pid = atoi(f);
+    const char *name = strchr(f, '.');
+
+    if ((pid > 1) &&
+	(name) &&
+	(strcmp(name+1, search) == 0))
+      found = TRUE;
+  }
+  g_dir_close(d);
+  g_free(search);
+
+  return found;
+}
+
 gboolean
 screen_get_sessions(HostNode *n) {
   if (n->screens) {
@@ -166,7 +200,7 @@ screen_attach(HostNode *n, const SessNode *s, const gboolean shared) {
  g_strfreev(argv);
 
 #ifdef FEAT_HISTORY
- if(n->parse_result && !screen_get_sessions(n)) {
+ if(n->parse_result && !screen_has_sessions(n)) {
     n->parse_result = FALSE;
     return history_ts_failed(cfg, n);
  }

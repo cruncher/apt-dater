@@ -83,18 +83,15 @@ tmux_initialize(HostNode *n) {
   g_signal_connect(n->mon_ttymux, "changed", G_CALLBACK(tmux_changed), n);
 }
 
-gboolean
-tmux_get_sessions(HostNode *n) {
-  g_assert(n);
-
-  if (n->screens) {
-    g_list_free(n->screens);
-    n->screens = NULL;
-  }
-
+/*
+ * Returns the raw `tmux list-session` output, or NULL if tmux could not
+ * be run or reported an error (e.g. no server running).
+ */
+static gchar *
+tmux_list_sessions(const HostNode *n) {
   const gchar *sdir = tmux_get_sdir();
   if (!sdir)
-    return FALSE;
+    return NULL;
 
   gchar *sock = g_strdup_printf("%s/%s_%s_%d", cfg->tmuxsockpath, n->ssh_user, n->hostname, n->ssh_port);
   gchar *argv[7] = {TMUX_BINARY, "-S", sock, "list-session", "-F", "#{session_name}\t#{session_created}\t#{session_attached}", NULL};
@@ -116,8 +113,9 @@ tmux_get_sessions(HostNode *n) {
   if(r == FALSE) {
     g_warning("failed to run tmux: %s", error->message);
     g_clear_error (&error);
+    g_free(out);
 
-    return FALSE;
+    return NULL;
   }
 
 #if GLIB_CHECK_VERSION(2, 70, 0)
@@ -126,11 +124,46 @@ tmux_get_sessions(HostNode *n) {
   /* deprecated name for g_spawn_check_wait_status: */
   if(!g_spawn_check_exit_status(rc, &error)) {
 #endif
-    /*    g_warning("error on list-sessions: %s", error->message);
-	  g_clear_error (&error);*/
+    /*    g_warning("error on list-sessions: %s", error->message);*/
+    g_clear_error (&error);
+    g_free(out);
 
-    return FALSE;
+    return NULL;
   }
+
+  return out;
+}
+
+/*
+ * Non-destructive session check. Unlike tmux_get_sessions() this must not
+ * touch n->screens: callers such as the UI hold on to list nodes while
+ * sessions are refreshed.
+ */
+static gboolean
+tmux_has_sessions(const HostNode *n) {
+  gchar *out = tmux_list_sessions(n);
+
+  if(!out)
+    return FALSE;
+
+  gboolean r = (out[0] != '\0');
+  g_free(out);
+
+  return r;
+}
+
+gboolean
+tmux_get_sessions(HostNode *n) {
+  g_assert(n);
+
+  if (n->screens) {
+    g_list_free(n->screens);
+    n->screens = NULL;
+  }
+
+  gchar *out = tmux_list_sessions(n);
+  if(!out)
+    return FALSE;
 
   gchar **lines = g_strsplit(out, "\n", 0xff);
   gint i = -1;
@@ -165,6 +198,8 @@ tmux_get_sessions(HostNode *n) {
   }
 
   g_strfreev(lines);
+  g_free(out);
+
   return g_list_length(n->screens) > 0;
 }
 
@@ -221,7 +256,7 @@ tmux_attach(HostNode *n, const SessNode *s, const gboolean shared) {
  g_strfreev(argv);
 
 #ifdef FEAT_HISTORY
- if(n->parse_result && !tmux_get_sessions(n)) {
+ if(n->parse_result && !tmux_has_sessions(n)) {
     n->parse_result = FALSE;
     return history_ts_failed(cfg, n);
  }
