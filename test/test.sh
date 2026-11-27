@@ -7,7 +7,7 @@
 #set -x
 
 # Default pattern from src/keyfiles.c
-PATTERN=$(grep err-pattern ../src/keyfiles.c | cut -d\" -f4)
+DEFAULT_PATTERN=$(grep err-pattern ../src/keyfiles.c | cut -d\" -f4)
 
 # override with a TEST patten
 PATTERN="((?<!no )error|(?<!insserv: )warning(?!: Linux headers are missing, which may explain the above failures)|failed|(?<!Linux headers are missing, which may explain the above )fail(?!2ban))"
@@ -31,4 +31,7 @@ grep --count --text --ignore-case --no-messages --perl-regexp --regexp="$PATTERN
 
 echo -n "lines that should ALL match, expect `wc -l logtest-notices.txt` ... got "
 grep --count --text --ignore-case --no-messages --perl-regexp --regexp="$PATTERN" logtest-notices.txt
+
+echo -n "os-prober warning should NOT match the default pattern, expect 0 ... got "
+grep --count --text --ignore-case --no-messages --perl-regexp --regexp="$DEFAULT_PATTERN" logtest-os-prober.txt || test $? -eq 1
 
